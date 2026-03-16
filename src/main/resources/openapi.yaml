@@ -1,0 +1,130 @@
+openapi: 3.0.3
+info:
+  title: coreResource
+  version: 1.0.0
+
+paths:
+
+  /auth/signup:
+    post:
+      summary: Register a new user
+      operationId: signup
+      tags:
+        - auth
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SignupRequest'
+      responses:
+        '200':
+          description: user registered
+
+  /auth/login:
+    post:
+      summary: Login user
+      operationId: login
+      tags:
+        - auth
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginRequest'
+      responses:
+        '200':
+          description: login success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+
+  /brush_up_resume:
+    get:
+      summary: Brush up resume
+      operationId: brushUpResume
+      tags:
+        - coreResource
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: successful operation
+
+  /brush_up_resume/updateResume:
+    post:
+      summary: Update resume
+      operationId: updateResume
+      tags:
+        - coreResource
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ResumeUpdateRequest'
+      responses:
+        '200':
+          description: resume updated
+
+  /brush_up_resume/submit:
+    post:
+      summary: Submit request
+      operationId: submitRequest
+      tags:
+        - coreResource
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: request submitted
+
+components:
+
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+
+    SignupRequest:
+      type: object
+      required:
+        - email
+        - password
+      properties:
+        email:
+          type: string
+        password:
+          type: string
+
+    LoginRequest:
+      type: object
+      required:
+        - email
+        - password
+      properties:
+        email:
+          type: string
+        password:
+          type: string
+
+    AuthResponse:
+      type: object
+      properties:
+        token:
+          type: string
+
+    ResumeUpdateRequest:
+      type: object
+      properties:
+        resumeContent:
+          type: string
