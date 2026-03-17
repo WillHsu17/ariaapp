@@ -12,7 +12,7 @@ import org.springframework.stereotype.Component;
 import java.util.Collections;
 
 @Component
-public class CustomUserDetailsService implements UserDetailsService {
+public class AuthService implements UserDetailsService {
 
     @Autowired
     private UserDao userDao;
