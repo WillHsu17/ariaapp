@@ -1,6 +1,6 @@
-package com.weihhsu.app.config;
+package com.ariat.app.config;
 
-import com.weihhsu.app.util.JwtUtil;
+import com.ariat.app.util.JwtUtil;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;

@@ -1,6 +1,6 @@
-package com.weihhsu.app.service.dao;
+package com.ariat.app.service.dao;
 
-import com.weihhsu.app.entity.User;
+import com.ariat.app.entity.User;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.Optional;

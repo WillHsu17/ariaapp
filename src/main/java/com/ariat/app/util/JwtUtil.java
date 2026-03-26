@@ -1,4 +1,4 @@
-package com.weihhsu.app.util;
+package com.ariat.app.util;
 
 import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.Jwts;

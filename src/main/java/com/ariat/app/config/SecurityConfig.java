@@ -1,4 +1,4 @@
-package com.weihhsu.app.config;
+package com.ariat.app.config;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;

@@ -1,4 +1,4 @@
-package com.weihhsu.app.entity;
+package com.ariat.app.entity;
 
 import jakarta.persistence.*;
 

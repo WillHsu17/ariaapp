@@ -1,11 +1,10 @@
-package com.weihhsu.app.resource;
+package com.ariat.app.resource;
 
 
-import com.weihhsu.app.entity.User;
-import com.weihhsu.app.service.dao.UserDao;
-import com.weihhsu.app.util.JwtUtil;
+import com.ariat.app.entity.User;
+import com.ariat.app.service.dao.UserDao;
+import com.ariat.app.util.JwtUtil;
 import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.stereotype.Component;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;

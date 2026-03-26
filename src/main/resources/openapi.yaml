@@ -1,130 +1,166 @@
-openapi: 3.0.3
+openapi: 3.1.0
 info:
-  title: coreResource
+  title: Trading API
+  description: API for user authentication and stock watchlist management
   version: 1.0.0
 
-paths:
-
-  /auth/signup:
-    post:
-      summary: Register a new user
-      operationId: signup
-      tags:
-        - auth
-      security: []
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/SignupRequest'
-      responses:
-        '200':
-          description: user registered
-
-  /auth/login:
-    post:
-      summary: Login user
-      operationId: login
-      tags:
-        - auth
-      security: []
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/LoginRequest'
-      responses:
-        '200':
-          description: login success
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/AuthResponse'
-
-  /brush_up_resume:
-    get:
-      summary: Brush up resume
-      operationId: brushUpResume
-      tags:
-        - coreResource
-      security:
-        - bearerAuth: []
-      responses:
-        '200':
-          description: successful operation
-
-  /brush_up_resume/updateResume:
-    post:
-      summary: Update resume
-      operationId: updateResume
-      tags:
-        - coreResource
-      security:
-        - bearerAuth: []
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/ResumeUpdateRequest'
-      responses:
-        '200':
-          description: resume updated
-
-  /brush_up_resume/submit:
-    post:
-      summary: Submit request
-      operationId: submitRequest
-      tags:
-        - coreResource
-      security:
-        - bearerAuth: []
-      responses:
-        '200':
-          description: request submitted
+servers:
+  - url: https://localhost:8080
+    description: Local development server
 
 components:
-
   securitySchemes:
     bearerAuth:
       type: http
       scheme: bearer
       bearerFormat: JWT
-
   schemas:
-
-    SignupRequest:
+    AuthRequest:
       type: object
-      required:
-        - email
-        - password
       properties:
-        email:
+        username:
           type: string
         password:
           type: string
-
-    LoginRequest:
-      type: object
       required:
-        - email
+        - username
         - password
-      properties:
-        email:
-          type: string
-        password:
-          type: string
 
     AuthResponse:
       type: object
       properties:
         token:
           type: string
+      required:
+        - token
 
-    ResumeUpdateRequest:
+    StockDetails:
       type: object
       properties:
-        resumeContent:
+        currentPrice:
+          type: number
+          format: float
+        dailyHigh:
+          type: number
+          format: float
+        dailyLow:
+          type: number
+          format: float
+        volume:
+          type: integer
+      required:
+        - currentPrice
+        - dailyHigh
+        - dailyLow
+        - volume
+
+    WatchlistRequest:
+      type: object
+      properties:
+        stockName:
           type: string
+      required:
+        - stockName
+
+    WatchlistResponse:
+      type: object
+      properties:
+        stockName:
+          type: string
+        stockDetails:
+          $ref: '#/components/schemas/StockDetails'
+      required:
+        - stockName
+        - stockDetails
+
+paths:
+  /auth/signup:
+    post:
+      summary: User signup
+      tags:
+        - Auth
+      requestBody:
+        description: Signup request body
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AuthRequest'
+      responses:
+        '201':
+          description: Signup successful
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+        '400':
+          description: Bad request
+
+  /auth/login:
+    post:
+      summary: User login
+      tags:
+        - Auth
+      requestBody:
+        description: Login request body
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AuthRequest'
+      responses:
+        '200':
+          description: Login successful
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+        '401':
+          description: Invalid credentials
+
+  /my_trading:
+    get:
+      operationId: getWatchlist
+      summary: Get user trading homepage (watchlist)
+      tags:
+        - Trading
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: User watchlist
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: string
+        '401':
+          description: Unauthorized
+
+  /my_trading/watchlist_details:
+    post:
+      operationId: getWatchlistDetails
+      summary: Get stock details from watchlist
+      tags:
+        - Trading
+      security:
+        - bearerAuth: []
+      requestBody:
+        description: Stock to fetch details
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/WatchlistRequest'
+      responses:
+        '200':
+          description: Stock details response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WatchlistResponse'
+        '404':
+          description: Stock not found
+        '401':
+          description: Unauthorized
