@@ -1,10 +1,10 @@
 package com.ariat.app.resource;
 
+import com.ariat.app.util.JwtUtil;
 import com.example.api.MyTradingApi;
 import com.ariat.app.entity.StockDetails;
 import com.ariat.app.entity.WatchlistRequest;
 import com.ariat.app.entity.WatchlistResponse;
-import com.ariat.app.service.AuthService;
 import com.ariat.app.service.TradingService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -21,15 +21,12 @@ public class TradingResource {
     private TradingService tradingService;
 
     @Autowired
-    private AuthService authService;
+    private JwtUtil jwtUtil;
 
     @GetMapping
     public ResponseEntity<List<String>> getWatchlist(@RequestHeader("Authorization") String authHeader) {
         String token = extractToken(authHeader);
-        if (!authService.validateToken(token)) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
-        }
-        String username = authService.getUsernameFromToken(token);
+        String username = jwtUtil.validateTokenAndGetUsername(token);
         List<String> watchlist = tradingService.getUserWatchlist(username);
         return ResponseEntity.ok(watchlist);
     }
@@ -38,10 +35,7 @@ public class TradingResource {
     public ResponseEntity<?> getWatchlistDetails(@RequestHeader("Authorization") String authHeader,
                                                  @RequestBody WatchlistRequest watchlistRequest) {
         String token = extractToken(authHeader);
-        if (!authService.validateToken(token)) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
-        }
-        String username = authService.getUsernameFromToken(token);
+        String username = jwtUtil.validateTokenAndGetUsername(token);
         if (!tradingService.isStockInWatchlist(username, watchlistRequest.getStockName())) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
                     .body("Stock not found in your watchlist");

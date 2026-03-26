@@ -120,6 +120,7 @@
 				<configuration>
 					<source>17</source> <!-- or your Java version -->
 					<target>17</target>
+					<release>17</release>
 					<annotationProcessorPaths>
 						<path>
 							<groupId>org.projectlombok</groupId>

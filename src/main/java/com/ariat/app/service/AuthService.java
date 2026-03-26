@@ -1,47 +1,56 @@
 package com.ariat.app.service;
 
-import io.jsonwebtoken.Claims;
-import io.jsonwebtoken.Jwts;
-import io.jsonwebtoken.SignatureAlgorithm;
-import org.springframework.beans.factory.annotation.Value;
+import com.ariat.app.entity.User;
+import com.ariat.app.service.dao.UserDao;
+import com.ariat.app.util.JwtUtil;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
-
-import java.util.Date;
+import org.springframework.web.bind.annotation.RequestParam;
 
 import java.util.*;
 
 @Service
 public class AuthService {
 
-    @Value("${jwt.secret}")
-    private String SECRET_KEY;
-    private final long EXPIRATION_MS = 3600000; // 1 hour
+    private final UserDao userDao;
+    private final PasswordEncoder passwordEncoder;
+    private final JwtUtil jwtUtil;
 
-    public String generateToken(String username) {
-        return Jwts.builder()
-                .setSubject(username)
-                .setIssuedAt(new Date())
-                .setExpiration(new Date(System.currentTimeMillis() + EXPIRATION_MS))
-                .signWith(SignatureAlgorithm.HS256, SECRET_KEY)
-                .compact();
+    public AuthService(UserDao userDao,
+                       PasswordEncoder passwordEncoder,
+                       JwtUtil jwtUtil) {
+        this.userDao = userDao;
+        this.passwordEncoder = passwordEncoder;
+        this.jwtUtil = jwtUtil;
     }
 
-    public boolean validateToken(String token) {
-        try {
-            Jwts.parser()
-                    .setSigningKey(SECRET_KEY)
-                    .parseClaimsJws(token);
-            return true;
-        } catch (Exception e) {
-            return false;
+    public String login(String username, String rawPassword) {
+
+        // 1. Find user
+        User user = userDao.findByUsername(username)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        // 2. Validate password
+        if (!passwordEncoder.matches(rawPassword, user.getPassword())) {
+            throw new RuntimeException("Invalid password");
         }
+
+        // 3. Generate JWT (delegated to JwtUtil)
+        return jwtUtil.generateToken(username);
     }
 
-    public String getUsernameFromToken(String token) {
-        Claims claims = Jwts.parser()
-                .setSigningKey(SECRET_KEY)
-                .parseClaimsJws(token)
-                .getBody();
-        return claims.getSubject();
+    public String signup(String username, String password) {
+
+        if (userDao.findByUsername(username).isPresent()) {
+            throw new RuntimeException("Username already exists");
+        }
+
+        String encoded = passwordEncoder.encode(password);
+
+        User user = new User(username, encoded, "USER");
+
+        userDao.save(user);
+
+        return jwtUtil.generateToken(username);
     }
 }
