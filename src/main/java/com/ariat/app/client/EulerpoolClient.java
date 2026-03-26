@@ -1,5 +1,7 @@
 package com.ariat.app.client;
 
+import com.ariat.app.client.entity.EulerStockSearchResponse;
+import com.ariat.app.client.entity.StockResult;
 import com.ariat.app.entity.EarningCall;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -8,6 +10,7 @@ import org.springframework.http.*;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.HttpStatusCodeException;
 import org.springframework.web.client.RestTemplate;
+import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.util.UriComponentsBuilder;
 
 import java.util.Arrays;
@@ -27,6 +30,42 @@ public class EulerpoolClient {
     @Value("${eulerpool.api.token}")
     private String apiToken;
 
+    private final String SEARCH_API = "/api/1/equity/search";
+
+    public EulerStockSearchResponse getStockBasis(String stockSymbol) {
+        WebClient client = WebClient.builder()
+                .baseUrl(apiHost)
+                .defaultHeader(HttpHeaders.ACCEPT, MediaType.APPLICATION_JSON_VALUE)
+                .build();
+        try {
+            return client.get()
+                    .uri(uriBuilder -> uriBuilder
+                            .path("/api/1/equity/search")
+                            .queryParam("q", stockSymbol)
+                            .queryParam("token", apiToken)
+                            .build())
+                    .retrieve()
+                    .onStatus(HttpStatusCode::is4xxClientError, response ->
+                            response.bodyToMono(String.class)
+                                    .flatMap(body -> {
+                                        log.error("Internal Error {}: {}", response.statusCode(), body);
+                                        throw new RuntimeException("Euler API returned error " + response.statusCode());
+                                    })
+                    )
+                    .onStatus(HttpStatusCode::is5xxServerError, response ->
+                            response.bodyToMono(String.class)
+                                    .flatMap(body -> {
+                                        log.error("Euler error {}: {}", response.statusCode(), body);
+                                        throw new RuntimeException("Euler API returned error " + response.statusCode());
+                                    })
+                    )
+                    .bodyToMono(EulerStockSearchResponse.class)
+                    .block();
+        } catch (Exception ex) {
+            log.error("Unexpected error calling Eulerpool API", ex);
+            return null;
+        }
+    }
     /**
      * Fetch earning calls for a given stock symbol
      */

@@ -1,5 +1,6 @@
 package com.ariat.app.resource;
 
+import com.ariat.app.client.entity.StockResult;
 import com.ariat.app.util.JwtUtil;
 import com.example.api.MyTradingApi;
 import com.ariat.app.entity.StockDetails;
@@ -36,12 +37,13 @@ public class TradingResource {
                                                  @RequestBody WatchlistRequest watchlistRequest) {
         String token = extractToken(authHeader);
         String username = jwtUtil.validateTokenAndGetUsername(token);
-        if (!tradingService.isStockInWatchlist(username, watchlistRequest.getStockName())) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                    .body("Stock not found in your watchlist");
-        }
-        StockDetails details = tradingService.getStockDetails(watchlistRequest.getStockName());
-        WatchlistResponse response = new WatchlistResponse(watchlistRequest.getStockName(), details);
+//        if (!tradingService.isStockInWatchlist(username, watchlistRequest.getStockName())) {
+//            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+//                    .body("Stock not found in your watchlist");
+//        }
+        StockResult response = tradingService.getStockBasis(watchlistRequest.getStockName());
+//        StockDetails details = tradingService.getStockDetails(watchlistRequest.getStockName());
+//        WatchlistResponse response = new WatchlistResponse(watchlistRequest.getStockName(), details);
         return ResponseEntity.ok(response);
     }
 

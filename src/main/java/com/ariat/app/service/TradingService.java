@@ -1,6 +1,8 @@
 package com.ariat.app.service;
 
 import com.ariat.app.client.EulerpoolClient;
+import com.ariat.app.client.entity.EulerStockSearchResponse;
+import com.ariat.app.client.entity.StockResult;
 import com.ariat.app.entity.EarningCall;
 import com.ariat.app.entity.StockDetails;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -17,9 +19,6 @@ public class TradingService {
     // Mock user watchlists
     private final Map<String, List<String>> userWatchlists = new HashMap<>();
 
-    // Mock stock details
-    private final Map<String, StockDetails> stockData = new HashMap<>();
-
     public TradingService() {
     }
 
@@ -31,8 +30,18 @@ public class TradingService {
         return getUserWatchlist(username).contains(stockName);
     }
 
-    public StockDetails getStockDetails(String stockName) {
-        return stockData.get(stockName);
+    public StockResult getStockBasis(String stockName) {
+        try {
+            EulerStockSearchResponse response = eulerpoolClient.getStockBasis(stockName);
+            Optional<StockResult> match = response.getResults()
+                    .stream()
+                    .filter(r -> r.getTicker().equalsIgnoreCase(stockName))
+                    .findFirst();
+
+            return match.orElse(null);
+        } catch (Exception e) {
+            return null;
+        }
     }
 
     public List<EarningCall> getEarningCalls(String stockSymbol) {
