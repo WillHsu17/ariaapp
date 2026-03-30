@@ -2,6 +2,7 @@ package com.ariat.app.service;
 
 import com.ariat.app.client.EulerpoolClient;
 import com.ariat.app.client.entity.EulerStockSearchResponse;
+import com.ariat.app.client.entity.InsiderSentimentResponse;
 import com.ariat.app.client.entity.StockResult;
 import com.ariat.app.entity.EarningCall;
 import com.ariat.app.entity.StockDetails;
@@ -28,6 +29,18 @@ public class TradingService {
 
     public boolean isStockInWatchlist(String username, String stockName) {
         return getUserWatchlist(username).contains(stockName);
+    }
+
+    public InsiderSentimentResponse getInsiderSentiment(String stockName) {
+        try {
+            StockResult stockResult = getStockBasis(stockName);
+            if (stockResult != null && stockResult.getIsin() != null) {
+                return eulerpoolClient.getInsiderSentiment(stockResult.getIsin());
+            }
+        } catch (Exception e) {
+            return null;
+        }
+        return null;
     }
 
     public StockResult getStockBasis(String stockName) {

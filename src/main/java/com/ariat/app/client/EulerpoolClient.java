@@ -1,6 +1,7 @@
 package com.ariat.app.client;
 
 import com.ariat.app.client.entity.EulerStockSearchResponse;
+import com.ariat.app.client.entity.InsiderSentimentResponse;
 import com.ariat.app.client.entity.StockResult;
 import com.ariat.app.entity.EarningCall;
 import lombok.RequiredArgsConstructor;
@@ -8,10 +9,13 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.*;
 import org.springframework.stereotype.Component;
+import org.springframework.util.LinkedMultiValueMap;
+import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.HttpStatusCodeException;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.util.UriComponentsBuilder;
+import reactor.core.publisher.Mono;
 
 import java.util.Arrays;
 import java.util.Collections;
@@ -31,40 +35,17 @@ public class EulerpoolClient {
     private String apiToken;
 
     private final String SEARCH_API = "/api/1/equity/search";
+    private final String INSIDER_SENTIMENT_API = "/api/1/sentiment/insider-sentiment/";
+
+    /** Public API methods using centralized get() */
+    public InsiderSentimentResponse getInsiderSentiment(String isin) {
+        return get(INSIDER_SENTIMENT_API + isin, null, InsiderSentimentResponse.class);
+    }
 
     public EulerStockSearchResponse getStockBasis(String stockSymbol) {
-        WebClient client = WebClient.builder()
-                .baseUrl(apiHost)
-                .defaultHeader(HttpHeaders.ACCEPT, MediaType.APPLICATION_JSON_VALUE)
-                .build();
-        try {
-            return client.get()
-                    .uri(uriBuilder -> uriBuilder
-                            .path("/api/1/equity/search")
-                            .queryParam("q", stockSymbol)
-                            .queryParam("token", apiToken)
-                            .build())
-                    .retrieve()
-                    .onStatus(HttpStatusCode::is4xxClientError, response ->
-                            response.bodyToMono(String.class)
-                                    .flatMap(body -> {
-                                        log.error("Internal Error {}: {}", response.statusCode(), body);
-                                        throw new RuntimeException("Euler API returned error " + response.statusCode());
-                                    })
-                    )
-                    .onStatus(HttpStatusCode::is5xxServerError, response ->
-                            response.bodyToMono(String.class)
-                                    .flatMap(body -> {
-                                        log.error("Euler error {}: {}", response.statusCode(), body);
-                                        throw new RuntimeException("Euler API returned error " + response.statusCode());
-                                    })
-                    )
-                    .bodyToMono(EulerStockSearchResponse.class)
-                    .block();
-        } catch (Exception ex) {
-            log.error("Unexpected error calling Eulerpool API", ex);
-            return null;
-        }
+        MultiValueMap<String, String> params = new LinkedMultiValueMap<>();
+        params.add("q", stockSymbol);
+        return get(SEARCH_API, params, EulerStockSearchResponse.class);
     }
     /**
      * Fetch earning calls for a given stock symbol
@@ -103,5 +84,47 @@ public class EulerpoolClient {
             log.error("Unexpected error calling Eulerpool API", ex);
             return Collections.emptyList();
         }
+    }
+
+    /**
+     * Centralized GET request handler
+     */
+    private <T> T get(String path, MultiValueMap<String, String> queryParams, Class<T> responseType) {
+        try {
+            WebClient.RequestHeadersSpec<?> request = getClient().get().uri(uriBuilder -> {
+                var builder = uriBuilder.path(path);
+                if (queryParams != null) queryParams.forEach(builder::queryParam);
+                builder.queryParam("token", apiToken);
+                return builder.build();
+            });
+
+            return request
+                    .retrieve()
+                    .onStatus(HttpStatusCode::is4xxClientError, response ->
+                            response.bodyToMono(String.class).flatMap(body -> {
+                                log.error("Client error {}: {}", response.statusCode(), body);
+                                return Mono.error(new RuntimeException("Euler API 4xx error: " + response.statusCode()));
+                            })
+                    )
+                    .onStatus(HttpStatusCode::is5xxServerError, response ->
+                            response.bodyToMono(String.class).flatMap(body -> {
+                                log.error("Server error {}: {}", response.statusCode(), body);
+                                return Mono.error(new RuntimeException("Euler API 5xx error: " + response.statusCode()));
+                            })
+                    )
+                    .bodyToMono(responseType)
+                    .block();
+
+        } catch (Exception ex) {
+            log.error("Unexpected error calling Euler API", ex);
+            return null;
+        }
+    }
+
+    private WebClient getClient() {
+        return WebClient.builder()
+                .baseUrl(apiHost)
+                .defaultHeader(HttpHeaders.ACCEPT, MediaType.APPLICATION_JSON_VALUE)
+                .build();
     }
 }
