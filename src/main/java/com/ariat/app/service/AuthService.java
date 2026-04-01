@@ -3,10 +3,11 @@ package com.ariat.app.service;
 import com.ariat.app.entity.User;
 import com.ariat.app.service.dao.UserDao;
 import com.ariat.app.util.JwtUtil;
+import com.example.model.AuthResponse;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
-import org.springframework.web.bind.annotation.RequestParam;
 
+import java.time.OffsetDateTime;
 import java.util.*;
 
 @Service
@@ -24,7 +25,7 @@ public class AuthService {
         this.jwtUtil = jwtUtil;
     }
 
-    public String login(String username, String rawPassword) {
+    public AuthResponse login(String username, String rawPassword) {
 
         // 1. Find user
         User user = userDao.findByUsername(username)
@@ -36,10 +37,10 @@ public class AuthService {
         }
 
         // 3. Generate JWT (delegated to JwtUtil)
-        return jwtUtil.generateToken(username);
+        return new AuthResponse(OffsetDateTime.now(), jwtUtil.generateToken(username));
     }
 
-    public String signup(String username, String password) {
+    public AuthResponse signup(String username, String password) {
 
         if (userDao.findByUsername(username).isPresent()) {
             throw new RuntimeException("Username already exists");
@@ -50,7 +51,8 @@ public class AuthService {
         User user = new User(username, encoded, "USER");
 
         userDao.save(user);
+        return new AuthResponse(OffsetDateTime.now(), jwtUtil.generateToken(username));
 
-        return jwtUtil.generateToken(username);
+
     }
 }

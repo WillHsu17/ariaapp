@@ -24,7 +24,7 @@ public class TradingResource {
     @Autowired
     private JwtUtil jwtUtil;
 
-    @GetMapping
+    @GetMapping("/watchlist")
     public ResponseEntity<List<String>> getWatchlist(@RequestHeader("Authorization") String authHeader) {
         String token = extractToken(authHeader);
         String username = jwtUtil.validateTokenAndGetUsername(token);

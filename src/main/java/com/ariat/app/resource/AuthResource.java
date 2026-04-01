@@ -1,10 +1,9 @@
 package com.ariat.app.resource;
 
 import com.ariat.app.service.AuthService;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import com.example.model.AuthRequest;
+import com.example.model.AuthResponse;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/auth")
@@ -17,15 +16,18 @@ public class AuthResource {
     }
 
     @PostMapping("/signup")
-    public String signup(@RequestParam String username,
-                         @RequestParam String password) {
-
-        return authService.signup(username, password);
+    public AuthResponse signup(@RequestBody AuthRequest authRequest) {
+        if (!authRequest.getUsername().isEmpty() && !authRequest.getPassword().isEmpty()) {
+            return authService.signup(authRequest.getUsername(), authRequest.getPassword());
+        }
+        return null;
     }
 
     @PostMapping("/login")
-    public String login(@RequestParam String username,
-                        @RequestParam String password) {
-        return authService.login(username, password);
+    public AuthResponse login(@RequestBody AuthRequest authRequest) {
+        if (!authRequest.getUsername().isEmpty() && !authRequest.getPassword().isEmpty()) {
+            return authService.login(authRequest.getUsername(), authRequest.getPassword());
+        }
+        return null;
     }
 }

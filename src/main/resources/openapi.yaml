@@ -29,10 +29,15 @@ components:
     AuthResponse:
       type: object
       properties:
+        loginTime:
+          type: string
+          format: date-time
+          example: "2026-03-31T15:45:36.374038"
         token:
           type: string
       required:
         - token
+        - loginTime
 
     StockDetails:
       type: object
