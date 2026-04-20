@@ -1,6 +1,6 @@
 openapi: 3.1.0
 info:
-  title: Trading API
+  title: Trading Resource APIs
   description: API for user authentication and stock watchlist management
   version: 1.0.0
 
