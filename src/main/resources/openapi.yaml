@@ -67,16 +67,52 @@ components:
       required:
         - stockName
 
-    WatchlistResponse:
+    YearlyBound:
+      type: object
+      properties:
+        upperBound:
+          type: number
+          format: double
+        lowerBound:
+          type: number
+          format: double
+      required:
+        - upperBound
+        - lowerBound
+
+    WatchlistStockItem:
       type: object
       properties:
         stockName:
           type: string
-        stockDetails:
-          $ref: '#/components/schemas/StockDetails'
+        currentPrice:
+          type: number
+          format: double
+        yearlyBound:
+          $ref: '#/components/schemas/YearlyBound'
+        sentimentIdx:
+          type: string
+        lastClosedPrice:
+          type: number
+          format: double
       required:
         - stockName
-        - stockDetails
+        - currentPrice
+        - yearlyBound
+        - lastClosedPrice
+
+    WatchlistResponse:
+      type: object
+      properties:
+        stocks:
+          type: array
+          items:
+            $ref: '#/components/schemas/WatchlistStockItem'
+        total:
+          type: integer
+      required:
+        - stocks
+        - total
 
 paths:
   /auth/signup:
@@ -123,23 +159,27 @@ paths:
         '401':
           description: Invalid credentials
 
-  /my_trading:
+  /my_trading/watchlist:
     get:
       operationId: getWatchlist
-      summary: Get user trading homepage (watchlist)
+      summary: Get user watchlist
       tags:
         - Trading
       security:
         - bearerAuth: []
+      parameters:
+        - name: Authorization
+          in: header
+          required: true
+          schema:
+            type: string
       responses:
         '200':
           description: User watchlist
           content:
             application/json:
               schema:
-                type: array
-                items:
-                  type: string
+                $ref: '#/components/schemas/WatchlistResponse'
         '401':
           description: Unauthorized
 
@@ -151,6 +191,12 @@ paths:
         - Trading
       security:
         - bearerAuth: []
+      parameters:
+        - name: Authorization
+          in: header
+          required: true
+          schema:
+            type: string
       requestBody:
         description: Stock to fetch details
         required: true
@@ -167,5 +213,71 @@ paths:
                 $ref: '#/components/schemas/WatchlistResponse'
         '404':
           description: Stock not found
+        '401':
+          description: Unauthorized
+
+  /my_trading/addToWatchList:
+    post:
+      operationId: addToWatchList
+      summary: Add a stock to the user watchlist
+      tags:
+        - Trading
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: Authorization
+          in: header
+          required: true
+          schema:
+            type: string
+      requestBody:
+        description: Stock to add
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/WatchlistRequest'
+      responses:
+        '200':
+          description: Updated watchlist after adding stock
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WatchlistResponse'
+        '400':
+          description: Bad request
+        '401':
+          description: Unauthorized
+
+  /my_trading/removeFromWatchList:
+    post:
+      operationId: removeFromWatchList
+      summary: Remove a stock from the user watchlist
+      tags:
+        - Trading
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: Authorization
+          in: header
+          required: true
+          schema:
+            type: string
+      requestBody:
+        description: Stock to remove
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/WatchlistRequest'
+      responses:
+        '200':
+          description: Updated watchlist after removing stock
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WatchlistResponse'
+        '400':
+          description: Stock not in watchlist or bad request
         '401':
           description: Unauthorized
